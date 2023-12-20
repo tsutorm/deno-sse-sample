@@ -12,7 +12,7 @@ export function SseDemo() {
 
     sse.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      updateClientValue(data.now);
+      updateClientValue(data);
     };
   }, []);
 
