@@ -5,9 +5,6 @@ import {
 } from "https://deno.land/std@0.209.0/http/server_sent_event_stream.ts";
 import { sleep } from "https://deno.land/x/sleep/mod.ts";
 
-
-const PUSH_DELAY_MILLISECONDS = 1_000;
-
 export const handler: Handlers = {
   async GET(_req) {
     const timeIterator = (async function*() {
