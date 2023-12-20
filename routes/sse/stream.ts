@@ -1,41 +1,36 @@
 import { Handlers } from "$fresh/server.ts";
 import {
-  ServerSentEvent,
-  ServerSentEventStreamTarget,
-} from "$std/http/server_sent_event.ts";
+  type ServerSentEventMessage,
+  ServerSentEventStream,
+} from "https://deno.land/std@0.209.0/http/server_sent_event_stream.ts";
+
 
 const PUSH_DELAY_MILLISECONDS = 1_000;
 
 export const handler: Handlers = {
   async GET(_req) {
-    const sseTarget = new ServerSentEventStreamTarget({
-      keepAlive: true,
+    let interval: number;
+    const stream = new ReadableStream<ServerSentEventMessage>({
+      start(controller) {
+        interval = setInterval(() => {
+          const now = new Date();
+          const payload = {
+            event: "message",
+            data: { now: JSON.stringify(now) }
+          };
+          console.log(payload);
+          controller.enqueue([payload]);
+        }, PUSH_DELAY_MILLISECONDS);
+      },
+      cancel() {
+        clearInterval(interval);
+      },
+    }).pipeThrough(new ServerSentEventStream());
+    return new Response(stream, {
+      headers: {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+      },
     });
-    let timer = 0;
-
-    const checkForUpdates = async () => {
-      const now = new Date();
-      sendEvent(sseTarget, JSON.stringify({ now }));
-      timer = setTimeout(checkForUpdates, PUSH_DELAY_MILLISECONDS);
-    };
-
-    sseTarget.addEventListener("close", () => {
-      clearTimeout(timer);
-    });
-
-    checkForUpdates();
-    return sseTarget.asResponse();
-  },
+  }
 };
-
-function sendEvent(
-  sseTarget: ServerSentEventStreamTarget,
-  now: string,
-) {
-  const sse = new ServerSentEvent("message", {
-    data: {
-      now: now,
-    },
-  });
-  sseTarget.dispatchEvent(sse);
-}
