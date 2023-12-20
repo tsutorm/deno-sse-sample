@@ -30,6 +30,7 @@ export const handler: Handlers = {
       headers: {
         "content-type": "text/event-stream",
         "cache-control": "no-cache",
+        "connection": "Keep-Alive",
       },
     });
   }
